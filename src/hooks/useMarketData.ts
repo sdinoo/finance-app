@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { marketData } from '@/services';
+import { MarketDataError, marketData } from '@/services';
 import type { PriceHistory, Quote, ViewRange } from '@/types/finance';
 
 export interface AsyncState<T> {
@@ -35,6 +35,28 @@ function useAsync<T>(load: () => Promise<T>, key: string, enabled: boolean): Asy
 
 export function useQuotes(symbols: string[]): AsyncState<Quote[]> {
   return useAsync(() => marketData.getQuotes(symbols), symbols.join(','), symbols.length > 0);
+}
+
+/**
+ * History for one optional, user-entered symbol. Kept separate from `useHistories` so a bad
+ * symbol can never fail the main dashboards. Errors are turned into user-facing messages.
+ */
+export function useHistory(symbol: string | undefined, range: ViewRange): AsyncState<PriceHistory> {
+  return useAsync(
+    async () => {
+      try {
+        return await marketData.getHistory(symbol as string, range);
+      } catch (error) {
+        throw new Error(
+          error instanceof MarketDataError && error.status === 404
+            ? `No market data found for ${symbol}. Check the ticker and try again.`
+            : 'Market data is unavailable right now. Please try again later.',
+        );
+      }
+    },
+    `${symbol}:${range}`,
+    symbol !== undefined,
+  );
 }
 
 /** Fetches histories for all symbols; a single failing symbol fails the whole set. */
