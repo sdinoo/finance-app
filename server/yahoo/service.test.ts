@@ -1,5 +1,6 @@
 import { COMPANIES } from '@/config/markets';
 import { handleApiRequest } from '../api';
+import { SymbolNotFoundError } from './errors';
 import type { YahooGateway } from './gateway';
 import { RequestError, FinanceService } from './service';
 
@@ -38,7 +39,33 @@ describe('FinanceService', () => {
     const service = new FinanceService(makeGateway());
     await expect(service.getQuotes([''])).rejects.toMatchObject({ status: 400 });
     await expect(service.getQuotes(['IBM', 'NOPE'])).rejects.toBeInstanceOf(RequestError);
-    await expect(service.getHistory('NOPE', 'week')).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects malformed history symbols with 400 before calling the provider', async () => {
+    const gateway = makeGateway();
+    const service = new FinanceService(gateway);
+    for (const bad of ['', 'A1', '../etc', 'TOOLONG', 'AAPL,MSFT']) {
+      await expect(service.getHistory(bad, 'week')).rejects.toMatchObject({ status: 400 });
+    }
+    expect(gateway.bars).not.toHaveBeenCalled();
+  });
+
+  it('serves history for a well-formed symbol outside the registry, normalizing case', async () => {
+    const gateway = makeGateway();
+    const service = new FinanceService(gateway);
+    const history = await service.getHistory(' aapl ', 'week');
+    expect(history).toHaveLength(3);
+    expect(gateway.bars).toHaveBeenCalledWith('AAPL', expect.anything());
+  });
+
+  it('maps an unknown symbol, or one with no bars, to 404', async () => {
+    const unknown = new FinanceService(
+      makeGateway({ bars: vi.fn().mockRejectedValue(new SymbolNotFoundError('ZZZZ')) }),
+    );
+    await expect(unknown.getHistory('ZZZZ', 'week')).rejects.toMatchObject({ status: 404 });
+
+    const empty = new FinanceService(makeGateway({ bars: vi.fn(async () => ({ bars: [] })) }));
+    await expect(empty.getHistory('ZZZZ', 'quarter')).rejects.toMatchObject({ status: 404 });
   });
 
   it('accepts every company in the registry (extensibility)', async () => {
@@ -79,6 +106,23 @@ describe('handleApiRequest', () => {
     expect(unknown.status).toBe(400);
     const missing = await handleApiRequest(service(), '/nope', new URLSearchParams());
     expect(missing.status).toBe(404);
+  });
+
+  it('returns 404 for an unknown history symbol and 400 for a malformed one', async () => {
+    const notFound = new FinanceService(
+      makeGateway({ bars: vi.fn().mockRejectedValue(new SymbolNotFoundError('ZZZZ')) }),
+    );
+    const missing = await handleApiRequest(notFound, '/history', new URLSearchParams('symbol=ZZZZ&range=week'));
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: 'No market data found for ZZZZ' });
+
+    const malformed = await handleApiRequest(service(), '/history', new URLSearchParams('symbol=A1&range=week'));
+    expect(malformed.status).toBe(400);
+  });
+
+  it('keeps quotes restricted to the registry', async () => {
+    const res = await handleApiRequest(service(), '/quotes', new URLSearchParams('symbols=AAPL'));
+    expect(res.status).toBe(400);
   });
 
   it('maps upstream failures to 502 without leaking details', async () => {

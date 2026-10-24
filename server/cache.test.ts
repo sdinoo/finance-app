@@ -38,4 +38,20 @@ describe('TtlCache', () => {
     const cache = new TtlCache<number>();
     await expect(cache.getOrLoad('k', 10, () => Promise.reject(new Error('down')))).rejects.toThrow('down');
   });
+
+  it('evicts the oldest entry once maxEntries is exceeded', async () => {
+    const cache = new TtlCache<number>(() => 0, 2);
+    const load = vi.fn(async () => 1);
+    await cache.getOrLoad('a', 100, load);
+    await cache.getOrLoad('b', 100, load);
+    await cache.getOrLoad('c', 100, load); // evicts 'a'
+    expect(load).toHaveBeenCalledTimes(3);
+
+    await cache.getOrLoad('b', 100, load);
+    await cache.getOrLoad('c', 100, load);
+    expect(load).toHaveBeenCalledTimes(3); // still cached
+
+    await cache.getOrLoad('a', 100, load);
+    expect(load).toHaveBeenCalledTimes(4); // was evicted
+  });
 });

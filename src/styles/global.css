@@ -273,3 +273,40 @@ body {
   font-size: 0.75rem;
   text-align: center;
 }
+
+.custom-form {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 16px;
+}
+
+.custom-form label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.custom-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.custom-form input {
+  flex: 1 1 180px;
+  max-width: 260px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.custom-form input[aria-invalid='true'] {
+  border-color: var(--down);
+}
+
+.custom-form__error {
+  margin: 0;
+  color: var(--down);
+  font-size: 0.85rem;
+}

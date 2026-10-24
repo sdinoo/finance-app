@@ -1,4 +1,5 @@
 import { buildHistory, mockProvider } from './mockProvider';
+import { MarketDataError } from './types';
 
 describe('mockProvider', () => {
   it('is deterministic for a given symbol/range/time', () => {
@@ -18,6 +19,20 @@ describe('mockProvider', () => {
     expect(today.length).toBeGreaterThan(0);
     expect(quarter.length).toBeGreaterThan(0);
     expect(today).not.toEqual(quarter);
+  });
+});
+
+describe('mockProvider custom symbols', () => {
+  it('charts a known non-registry symbol', async () => {
+    const history = await mockProvider.getHistory('AAPL', 'week');
+    expect(history.length).toBeGreaterThan(0);
+  });
+
+  it('rejects an unknown symbol with a 404 MarketDataError', async () => {
+    await expect(mockProvider.getHistory('ZZZZ', 'week')).rejects.toEqual(
+      expect.objectContaining({ name: 'MarketDataError', status: 404 }),
+    );
+    await expect(mockProvider.getHistory('ZZZZ', 'week')).rejects.toBeInstanceOf(MarketDataError);
   });
 });
 
