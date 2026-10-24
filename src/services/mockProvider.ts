@@ -1,6 +1,9 @@
-import { getCompany } from '@/config/markets';
+import { getCompany, isKnownSymbol } from '@/config/markets';
 import type { PriceHistory, Quote, ViewRange } from '@/types/finance';
-import type { MarketDataProvider } from './types';
+import { MarketDataError, type MarketDataProvider } from './types';
+
+/** Extra symbols the offline mock can chart besides the registry; anything else behaves as "not found". */
+const MOCK_EXTRA_SYMBOLS = ['AAPL', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META'];
 
 /** Small deterministic PRNG so mock data is stable across renders and tests. */
 function seeded(seed: number): () => number {
@@ -70,6 +73,9 @@ export const mockProvider: MarketDataProvider = {
   },
 
   async getHistory(symbol, range) {
+    if (!isKnownSymbol(symbol) && !MOCK_EXTRA_SYMBOLS.includes(symbol)) {
+      throw new MarketDataError(`No market data found for ${symbol}`, 404);
+    }
     return buildHistory(symbol, range);
   },
 };

@@ -26,6 +26,14 @@ export const getCompany = (symbol: string): Company | undefined =>
 
 export const isKnownSymbol = (symbol: string): boolean => getCompany(symbol) !== undefined;
 
+/** Ticker shape accepted for user-entered symbols: 1-5 letters, optional class suffix (BRK.B, RDS-A). */
+const SYMBOL_PATTERN = /^[A-Z]{1,5}([.-][A-Z])?$/;
+
+export const normalizeSymbol = (input: string): string => input.trim().toUpperCase();
+
+/** Format check only; says nothing about whether the symbol exists. Expects a normalized symbol. */
+export const isValidSymbol = (symbol: string): boolean => SYMBOL_PATTERN.test(symbol);
+
 export const VIEWS: Record<ViewRange, ViewConfig> = {
   today: { range: 'today', label: 'Today', period: 'today', days: 1, interval: '5m' },
   week: { range: 'week', label: 'Last 7 Days', period: 'over the last 7 days', days: 7, interval: '30m' },
