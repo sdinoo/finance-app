@@ -25,6 +25,10 @@ export function DashboardPage() {
         <ViewTabs value={view} onChange={setView} />
       </header>
 
+      <div className="announcement-banner" role="status">
+        Welcome to the Finance Dashboard — Powered by IBM Bob!
+      </div>
+
       <CompanySelector selected={selected} onToggle={toggle} pinned={PRIMARY_SYMBOL} />
       <CustomSymbolForm active={custom} onShow={setCustom} onClear={() => setCustom(undefined)} />
 

@@ -11,6 +11,15 @@ vi.mock('@/components/ReturnBarChart', () => ({
 }));
 
 describe('DashboardPage', () => {
+  it('shows the announcement banner below the header', async () => {
+    render(<DashboardPage />);
+
+    const banner = screen.getByText('Welcome to the Finance Dashboard — Powered by IBM Bob!');
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading.compareDocumentPosition(banner) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await screen.findByRole('article', { name: 'IBM' });
+  });
+
   it('opens on the current-day summary with a card per company', async () => {
     render(<DashboardPage />);
 
