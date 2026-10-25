@@ -25,8 +25,6 @@ export function DashboardPage() {
         <ViewTabs value={view} onChange={setView} />
       </header>
 
-      <p className="banner">Welcome to the Finance Dashboard — Powered by IBM Bob!</p>
-
       <CompanySelector selected={selected} onToggle={toggle} pinned={PRIMARY_SYMBOL} />
       <CustomSymbolForm active={custom} onShow={setCustom} onClear={() => setCustom(undefined)} />
 
