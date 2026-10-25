@@ -45,6 +45,17 @@ describe('QuoteCard', () => {
     expect(card).toHaveTextContent('$247.03 – $254.71');
     expect(card).toHaveTextContent('5.8M');
   });
+
+  it('shows a "Featured" badge on the primary card', () => {
+    render(<QuoteCard quote={quote} primary />);
+    expect(screen.getByText('Featured')).toBeInTheDocument();
+  });
+
+  it('does not show a "Featured" badge on non-primary cards', () => {
+    const peer = { ...quote, symbol: 'MSFT', name: 'Microsoft' };
+    render(<QuoteCard quote={peer} />);
+    expect(screen.queryByText('Featured')).not.toBeInTheDocument();
+  });
 });
 
 describe('TrendTable', () => {

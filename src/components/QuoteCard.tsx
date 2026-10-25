@@ -13,6 +13,7 @@ export function QuoteCard({ quote, primary }: QuoteCardProps) {
     <article className={primary ? 'quote quote--primary' : 'quote'} aria-label={quote.name}>
       <header className="quote__header">
         <h3 className="quote__symbol">{quote.symbol}</h3>
+        {primary && <span className="quote__badge">Featured</span>}
         <span className="quote__name">{quote.name}</span>
       </header>
       <p className="quote__price">{formatCurrency(quote.price)}</p>
